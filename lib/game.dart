@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'innerGrid.dart';
+
 class Game extends StatefulWidget {
   const Game({Key? key, required this.title}) : super(key: key);
 
@@ -37,6 +39,7 @@ class _GameState extends State<Game> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blueAccent, width: 1), // Bord bleu
                 ),
+                child: const InnerGrid(),
               );
             }),
 
