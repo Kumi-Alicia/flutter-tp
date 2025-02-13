@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'sudokuCase.dart';
 
 class InnerGrid extends StatelessWidget {
-  const InnerGrid({Key? key}) : super(key: key);
+  final List<int> blockValues;
+  final int? selectedIndex;
+  final Function(int) onCellTap;
+
+  const InnerGrid({
+    Key? key,
+    required this.blockValues,
+    required this.selectedIndex,
+    required this.onCellTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -10,18 +20,10 @@ class InnerGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: List.generate(9, (index) {
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black, width: 0.3),
-          ),
-          child: const Center(
-            child: Text(
-              'T',
-              style: TextStyle(
-                fontSize: 16,
-              ),
-            ),
-          ),
+        return SudokuCase(
+          value: blockValues[index],
+          isSelected: selectedIndex == index,
+          onTap: () => onCellTap(index),
         );
       }),
     );

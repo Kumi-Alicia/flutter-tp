@@ -1,33 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku_api/sudoku_api.dart';
-
-class InnerGrid extends StatelessWidget {
-  final List<int> blockValues; // Values for the 3x3 block
-
-  const InnerGrid({Key? key, required this.blockValues}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: List.generate(9, (index) {
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black, width: 0.3),
-          ),
-          child: Center(
-            child: Text(
-              blockValues[index] == 0 ? '' : '${blockValues[index]}',
-              style: TextStyle(fontSize: 16),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
+import 'innergrid.dart';
 
 class Game extends StatefulWidget {
   const Game({Key? key, required this.title}) : super(key: key);
@@ -39,30 +12,52 @@ class Game extends StatefulWidget {
 }
 
 class _GameState extends State<Game> {
-  late Puzzle puzzle;  // Variable pour stocker la grille générée
+  late Puzzle puzzle;
   List<List<int>>? sudokuBoard;
+  int? selectedCell;
 
   @override
   void initState() {
     super.initState();
-    // Start the puzzle generation process asynchronously
     generateSudoku();
   }
 
+  /// Génère une grille de Sudoku aléatoire et met à jour l'état du jeu.
   Future<void> generateSudoku() async {
-    // Configure puzzle options (we can change the pattern if needed)
     PuzzleOptions puzzleOptions = PuzzleOptions(patternName: "random");
     puzzle = Puzzle(puzzleOptions);
 
-    // Generate the puzzle
     await puzzle.generate();
 
-    // Once puzzle is generated, extract the board and update the state
     setState(() {
       sudokuBoard = puzzle.board()?.matrix()?.map((row) =>
           row.map((cell) => cell.getValue() ?? 0).toList()
       ).toList();
     });
+  }
+
+  /// Gère la sélection d'une case en mettant à jour l'index de la case sélectionnée.
+  void handleCellTap(int globalIndex) {
+    setState(() {
+      selectedCell = globalIndex;
+    });
+  }
+
+  /// Extrait les valeurs d'un bloc 3x3 à partir de la grille Sudoku.
+  ///
+  /// - [board] : La grille complète du Sudoku.
+  /// - [blockX] : L'index de colonne du bloc (0 à 2).
+  /// - [blockY] : L'index de ligne du bloc (0 à 2).
+  ///
+  /// Retourne une liste des 9 valeurs du bloc.
+  List<int> extractBlockValues(List<List<int>> board, int blockX, int blockY) {
+    List<int> values = [];
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        values.add(board[blockY * 3 + i][blockX * 3 + j]);
+      }
+    }
+    return values;
   }
 
   @override
@@ -77,27 +72,22 @@ class _GameState extends State<Game> {
         title: Text(widget.title),
       ),
       body: sudokuBoard == null
-          ? Center(child: CircularProgressIndicator()) // Loading indicator while generating puzzle
+          ? const Center(child: CircularProgressIndicator())
           : Center(
         child: SizedBox(
           height: boxSize * 3,
           width: boxSize * 3,
           child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               mainAxisSpacing: 0,
               crossAxisSpacing: 0,
             ),
             itemCount: 9,
             itemBuilder: (context, index) {
-              var x = index % 3;  // Bloc (x)
-              var y = index ~/ 3;  // Position dans le bloc (y)
-              // Extract the 3x3 block of values
-              var blockValues = [
-                sudokuBoard![y * 3][x * 3], sudokuBoard![y * 3][x * 3 + 1], sudokuBoard![y * 3][x * 3 + 2],
-                sudokuBoard![y * 3 + 1][x * 3], sudokuBoard![y * 3 + 1][x * 3 + 1], sudokuBoard![y * 3 + 1][x * 3 + 2],
-                sudokuBoard![y * 3 + 2][x * 3], sudokuBoard![y * 3 + 2][x * 3 + 1], sudokuBoard![y * 3 + 2][x * 3 + 2],
-              ];
+              var x = index % 3;
+              var y = index ~/ 3;
+              var blockValues = extractBlockValues(sudokuBoard!, x, y);
 
               return Container(
                 width: boxSize,
@@ -105,7 +95,14 @@ class _GameState extends State<Game> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blueAccent, width: 1),
                 ),
-                child: InnerGrid(blockValues: blockValues), // Use InnerGrid for each block
+                child: InnerGrid(
+                  blockValues: blockValues,
+                  selectedIndex: selectedCell != null && selectedCell! ~/ 9 == index ? selectedCell! % 9 : null,
+                  onCellTap: (innerIndex) {
+                    int globalIndex = index * 9 + innerIndex;
+                    handleCellTap(globalIndex);
+                  },
+                ),
               );
             },
           ),
@@ -114,3 +111,4 @@ class _GameState extends State<Game> {
     );
   }
 }
+
