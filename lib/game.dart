@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sudoku_api/sudoku_api.dart';
 import 'innergrid.dart';
+import 'numberButton.dart';
 
 class Game extends StatefulWidget {
   const Game({Key? key, required this.title}) : super(key: key);
@@ -60,6 +61,20 @@ class _GameState extends State<Game> {
     return values;
   }
 
+  /// Met à jour la valeur de la cellule sélectionnée avec la valeur donnée par l'utilisateur.
+  void setCellValue(int value) {
+    if (selectedCell != null) {
+      int pos = selectedCell!;
+      puzzle.board()!.cellAt(pos as Position).setValue(value);
+
+      setState(() {
+        sudokuBoard = puzzle.board()?.matrix()?.map((row) =>
+            row.map((cell) => cell.getValue() ?? 0).toList()
+        ).toList();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height / 2;
@@ -73,40 +88,72 @@ class _GameState extends State<Game> {
       ),
       body: sudokuBoard == null
           ? const Center(child: CircularProgressIndicator())
-          : Center(
-        child: SizedBox(
-          height: boxSize * 3,
-          width: boxSize * 3,
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 0,
-              crossAxisSpacing: 0,
-            ),
-            itemCount: 9,
-            itemBuilder: (context, index) {
-              var x = index % 3;
-              var y = index ~/ 3;
-              var blockValues = extractBlockValues(sudokuBoard!, x, y);
-
-              return Container(
-                width: boxSize,
-                height: boxSize,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blueAccent, width: 1),
+          : Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Center(
+            child: SizedBox(
+              height: boxSize * 3,
+              width: boxSize * 3,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 0,
+                  crossAxisSpacing: 0,
                 ),
-                child: InnerGrid(
-                  blockValues: blockValues,
-                  selectedIndex: selectedCell != null && selectedCell! ~/ 9 == index ? selectedCell! % 9 : null,
-                  onCellTap: (innerIndex) {
-                    int globalIndex = index * 9 + innerIndex;
-                    handleCellTap(globalIndex);
-                  },
+                itemCount: 9,
+                itemBuilder: (context, index) {
+                  var x = index % 3;
+                  var y = index ~/ 3;
+                  var blockValues = extractBlockValues(sudokuBoard!, x, y);
+
+                  return Container(
+                    width: boxSize,
+                    height: boxSize,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blueAccent, width: 1),
+                    ),
+                    child: InnerGrid(
+                      blockValues: blockValues,
+                      selectedIndex: selectedCell != null && selectedCell! ~/ 9 == index ? selectedCell! % 9 : null,
+                      onCellTap: (innerIndex) {
+                        int globalIndex = index * 9 + innerIndex;
+                        handleCellTap(globalIndex);
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              int value = index + 1;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: NumberButton(
+                  value: value,
+                  onPressed: setCellValue,
                 ),
               );
-            },
+            }),
           ),
-        ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(4, (index) {
+              int value = index + 6;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: NumberButton(
+                  value: value,
+                  onPressed: setCellValue,
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
