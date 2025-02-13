@@ -16,10 +16,9 @@ class NumberButton extends StatelessWidget {
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith<Color>(
               (Set<WidgetState> states) {
-            if (states.contains(MaterialState.hovered)) {
+            if (states.contains(WidgetState.hovered)) {
               return Colors.indigoAccent.shade200.withAlpha(180);
             }
-            // Par défaut
             return Colors.blueAccent.shade100.withAlpha(150);
           },
         ),
